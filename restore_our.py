@@ -1,0 +1,80 @@
+import torch
+import torch.nn as nn
+import sys
+from torch.utils.data import TensorDataset, DataLoader
+import numpy as np
+import sys
+from sklearn.utils import shuffle
+#from model_transformer import TransformerEncoder
+from model_pytorch import TempCNNWP
+import time
+from sklearn.metrics import f1_score
+import os
+
+def evaluation(model, dataloader, device):
+    model.eval()
+    tot_pred = []
+    tot_labels = []
+    for x_batch, y_batch in dataloader:
+        x_batch = x_batch.to(device)
+        y_batch = y_batch.to(device)
+        pred, _, _, _ = model(x_batch)
+        pred_npy = np.argmax(pred.cpu().detach().numpy(), axis=1)
+        tot_pred.append( pred_npy )
+        tot_labels.append( y_batch.cpu().detach().numpy())
+    tot_pred = np.concatenate(tot_pred)
+    tot_labels = np.concatenate(tot_labels)
+    return tot_pred, tot_labels
+
+
+source_year = int(sys.argv[1])
+target_year = int(sys.argv[2])
+version = sys.argv[3]
+
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+
+tot_avg_f1 = []
+tot_micro_f1 = []
+for i in range(5):
+    print("load %d"%i)
+    file_name = None
+    '''
+    if version == 'v2':
+        file_name = "model_sda_%s_%d_%s.pth"%(source_year, i, target_year)
+    if version == 'v3':
+        file_name = "model_sda_v3_%s_%d_%s.pth"%(source_year, i, target_year)
+    if version == 'v4':
+        file_name = "model_sda_v4_%s_%d_%s.pth"%(source_year, i, target_year)
+    if version == 'v5':
+        file_name = "model_sda_v5_%s_%d_%s.pth"%(source_year, i, target_year)
+    '''
+    file_name = "model_sda_%s_%s_%d_%s.pth"%(version,source_year, i, target_year)
+    if version == "v2":
+        file_name = "model_sda_%s_%d_%s.pth"%(source_year, i, target_year)
+
+    test_data = np.load("test_data_%d_%d.npy"%(i,target_year)) 
+    test_label = np.load("test_label_%d_%d.npy"%(i,target_year))-1
+    if not os.path.exists(file_name):
+        continue
+
+    x_test = torch.tensor(test_data, dtype=torch.float32)
+    y_test = torch.tensor(test_label, dtype=torch.int64)
+    test_dataset = TensorDataset(x_test, y_test)
+    test_dataloader = DataLoader(test_dataset, shuffle=False, batch_size=2048)
+
+    n_classes = len(test_label)
+    model = TempCNNWP([test_data.shape[1], test_data.shape[2]], proj_dim=128, num_classes=n_classes).to(device)
+    print(file_name)
+    model.load_state_dict(torch.load(file_name))
+    print("model weights loaded")
+    sys.stdout.flush()
+
+
+    pred, labels = evaluation(model, test_dataloader, device)
+    tot_avg_f1.append( f1_score(pred, labels, average="weighted") )
+    tot_micro_f1.append( f1_score(pred, labels, average="micro") )
+
+print("average F1 %.2f $\pm$ %.2f"%(np.mean(tot_avg_f1)*100, np.std(tot_avg_f1)*100 ))
+print("micro F1 %.2f $\pm$ %.2f"%(np.mean(tot_micro_f1)*100, np.std(tot_micro_f1)*100 ))
+
