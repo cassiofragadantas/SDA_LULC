@@ -29,7 +29,7 @@ def evaluation(model, dataloader, device):
 
 source_year = int(sys.argv[1])
 target_year = int(sys.argv[2])
-version = sys.argv[3]
+# version = sys.argv[3]
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -38,23 +38,11 @@ tot_avg_f1 = []
 tot_micro_f1 = []
 for i in range(5):
     print("load %d"%i)
-    file_name = None
-    '''
-    if version == 'v2':
-        file_name = "model_sda_%s_%d_%s.pth"%(source_year, i, target_year)
-    if version == 'v3':
-        file_name = "model_sda_v3_%s_%d_%s.pth"%(source_year, i, target_year)
-    if version == 'v4':
-        file_name = "model_sda_v4_%s_%d_%s.pth"%(source_year, i, target_year)
-    if version == 'v5':
-        file_name = "model_sda_v5_%s_%d_%s.pth"%(source_year, i, target_year)
-    '''
-    file_name = "model_sda_%s_%s_%d_%s.pth"%(version,source_year, i, target_year)
-    if version == "v2":
-        file_name = "model_sda_%s_%d_%s.pth"%(source_year, i, target_year)
+    file_name = "model_sda_%s_%d_%s.pth"%(source_year, i, target_year)
 
-    test_data = np.load("test_data_%d_%d.npy"%(i,target_year)) 
-    test_label = np.load("test_label_%d_%d.npy"%(i,target_year))-1
+    path_name = './DATA/'
+    test_data = np.load("%stest_data_%d_%d.npy"%(path_name,i,target_year))
+    test_label = np.load("%stest_label_%d_%d.npy"%(path_name,i,target_year))-1
     if not os.path.exists(file_name):
         continue
 

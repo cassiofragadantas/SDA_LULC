@@ -335,7 +335,7 @@ criterion = nn.CrossEntropyLoss()
 
 opt = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=1e-5)
 
-model_file_name = "model_sda_v12_%d_%d_%d.pth"%(source_year, id_, target_year)
+model_file_name = "model_sda_%d_%d_%d.pth"%(source_year, id_, target_year)
 valid_f1 = 0.0
 for epoch in range(num_epochs):
     X_train_source, Y_train_source = shuffle(X_train_source, Y_train_source)

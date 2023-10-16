@@ -39,10 +39,11 @@ for i in range(5):
     if model_type == 2:
         file_name = "rf_model_combined_prediction_%s_%s_%s.npy"%(source_year, target_year, i)
     
-    test_data = np.load("test_data_%d_%d.npy"%(i,target_year)) 
+    path_name = './DATA/'
+    test_data = np.load("%stest_data_%d_%d.npy"%(path_name,i,target_year))
     nrow, nts, nc = test_data.shape
     test_data = np.reshape(test_data, (nrow, nts * nc))
-    test_label = np.load("test_label_%d_%d.npy"%(i,target_year))
+    test_label = np.load("%stest_label_%d_%d.npy"%(path_name,i,target_year))
     print(file_name)
     if not os.path.exists(file_name):
         continue

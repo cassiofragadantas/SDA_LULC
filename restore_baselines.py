@@ -43,8 +43,9 @@ for i in range(5):
         file_name = "model_full_target_%d_%s.pth"%(i, target_year)
     if model_type == 2:
         file_name = "model_combined_source_target_%s_%d_%s.pth"%(source_year, i, target_year)
-    test_data = np.load("test_data_%d_%d.npy"%(i,target_year)) 
-    test_label = np.load("test_label_%d_%d.npy"%(i,target_year))-1
+    path_name = './DATA/'
+    test_data = np.load("%stest_data_%d_%d.npy"%(path_name,i,target_year))
+    test_label = np.load("%stest_label_%d_%d.npy"%(path_name,i,target_year))-1
 
     if not os.path.exists(file_name):
         continue
