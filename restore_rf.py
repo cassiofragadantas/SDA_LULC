@@ -27,6 +27,7 @@ model_type = int(sys.argv[3])
 
 tot_avg_f1 = []
 tot_micro_f1 = []
+tot_perclass_f1 = []
 for i in range(5):
     pred = None
     #DIRECT TRANSFER
@@ -51,7 +52,11 @@ for i in range(5):
     pred = np.load(file_name)
     tot_avg_f1.append( f1_score(pred, test_label, average="weighted") )
     tot_micro_f1.append( f1_score(pred, test_label, average="micro") )
+    tot_perclass_f1.append( f1_score(pred, test_label, average=None) )
 
 print("average F1 %.2f $\pm$ %.2f"%(np.mean(tot_avg_f1)*100, np.std(tot_avg_f1)*100 ))
 print("micro F1 %.2f $\pm$ %.2f"%(np.mean(tot_micro_f1)*100, np.std(tot_micro_f1)*100 ))
+print("per-class F1 %s $\pm$ %s"
+      %(np.array2string(np.mean(np.stack(tot_perclass_f1),axis=0)*100, precision=2), 
+        np.array2string(np.std(np.stack(tot_perclass_f1),axis=0)*100, precision=2 )))
 
