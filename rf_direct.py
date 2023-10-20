@@ -15,15 +15,19 @@ from sklearn.model_selection import GridSearchCV
 source_year = int(sys.argv[1])
 id_ = int(sys.argv[2])
 target_year = int(sys.argv[3])
+rng_seed = int(sys.argv[4]) if len(sys.argv) > 4 else 42
 
-train_data = np.load("data_%d.npy"%source_year)
-train_label = np.load("gt_data_%d.npy"%source_year)[:,2]
+print(f'(Random seed set to {rng_seed})')
+np.random.seed(rng_seed)
 
-valid_data = np.load("valid_data_%d_%d.npy"%(id_,target_year)) 
-valid_label = np.load("valid_label_%d_%d.npy"%(id_,target_year))
+train_data = np.load("./DATA/data_%d.npy"%source_year)
+train_label = np.load("./DATA/gt_data_%d.npy"%source_year)[:,2]
 
-test_data = np.load("test_data_%d_%d.npy"%(id_,target_year)) 
-test_label = np.load("test_label_%d_%d.npy"%(id_,target_year))
+valid_data = np.load("./DATA/valid_data_%d_%d.npy"%(id_,target_year)) 
+valid_label = np.load("./DATA/valid_label_%d_%d.npy"%(id_,target_year))
+
+test_data = np.load("./DATA/test_data_%d_%d.npy"%(id_,target_year)) 
+test_label = np.load("./DATA/test_label_%d_%d.npy"%(id_,target_year))
 
 
 

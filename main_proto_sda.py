@@ -405,16 +405,21 @@ def buildPairedSourceTargetData( X_source, Y_source, X_target, Y_target):
 source_year = int( sys.argv[1] )
 id_ = int( sys.argv[2] )
 target_year = int( sys.argv[3] )
+rng_seed = int(sys.argv[4]) if len(sys.argv) > 4 else 42
 
-X_train_target = np.load("train_data_%d_%d.npy"%(id_, target_year))
-Y_train_target = np.load("train_label_%d_%d.npy"%(id_, target_year))
+print(f'(Random seed set to {rng_seed})')
+torch.manual_seed(rng_seed)
+np.random.seed(rng_seed)
+
+X_train_target = np.load("./DATA/train_data_%d_%d.npy"%(id_, target_year))
+Y_train_target = np.load("./DATA/train_label_%d_%d.npy"%(id_, target_year))
 
 
-X_train_source = np.load("data_%d.npy"%(source_year))
-Y_train_source = np.load("gt_data_%d.npy"%source_year)[:,2]
+X_train_source = np.load("./DATA/data_%d.npy"%(source_year))
+Y_train_source = np.load("./DATA/gt_data_%d.npy"%source_year)[:,2]
 
-X_test_target = np.load("test_data_%d_%d.npy"%(id_, target_year))
-Y_test_target = np.load("test_label_%d_%d.npy"%(id_, target_year))
+X_test_target = np.load("./DATA/test_data_%d_%d.npy"%(id_, target_year))
+Y_test_target = np.load("./DATA/test_label_%d_%d.npy"%(id_, target_year))
 
 Y_train_target = Y_train_target - 1
 Y_train_source = Y_train_source - 1

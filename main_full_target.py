@@ -30,17 +30,21 @@ def evaluation(model, dataloader, device):
 
 id_ = int(sys.argv[1])
 target_year = int(sys.argv[2])
+rng_seed = int(sys.argv[3]) if len(sys.argv) > 3 else 42
+
+print(f'(Random seed set to {rng_seed})')
+torch.manual_seed(rng_seed)
+np.random.seed(rng_seed)
 
 
+train_data = np.load("./DATA/train_data_%d_%d.npy"%(id_, target_year))
+train_label = np.load("./DATA/train_label_%d_%d.npy"%(id_, target_year))
 
-train_data = np.load("train_data_%d_%d.npy"%(id_, target_year))
-train_label = np.load("train_label_%d_%d.npy"%(id_, target_year))
+valid_data = np.load("./DATA/valid_data_%d_%d.npy"%(id_,target_year)) 
+valid_label = np.load("./DATA/valid_label_%d_%d.npy"%(id_,target_year))
 
-valid_data = np.load("valid_data_%d_%d.npy"%(id_,target_year)) 
-valid_label = np.load("valid_label_%d_%d.npy"%(id_,target_year))
-
-test_data = np.load("test_data_%d_%d.npy"%(id_, target_year))
-test_label = np.load("test_label_%d_%d.npy"%(id_, target_year))
+test_data = np.load("./DATA/test_data_%d_%d.npy"%(id_, target_year))
+test_label = np.load("./DATA/test_label_%d_%d.npy"%(id_, target_year))
 
 print(train_data.shape)
 print(train_label.shape)

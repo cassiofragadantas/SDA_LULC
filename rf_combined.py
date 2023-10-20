@@ -15,26 +15,30 @@ from sklearn.model_selection import GridSearchCV
 source_year = int(sys.argv[1])
 id_ = int(sys.argv[2])
 target_year = int(sys.argv[3])
+rng_seed = int(sys.argv[4]) if len(sys.argv) > 4 else 42
+
+print(f'(Random seed set to {rng_seed})')
+np.random.seed(rng_seed)
 
 fileName = "rf_model_combined_prediction_%s_%s_%s"%(source_year,target_year,id_)
 if os.path.exists(fileName+".npy"):
     exit(0)
 
 
-train_data_source = np.load("data_%d.npy"%source_year)
-train_label_source = np.load("gt_data_%d.npy"%source_year)[:,2]
+train_data_source = np.load("./DATA/data_%d.npy"%source_year)
+train_label_source = np.load("./DATA/gt_data_%d.npy"%source_year)[:,2]
 
-train_data_target = np.load("train_data_%d_%d.npy"%(id_,target_year)) 
-train_label_target = np.load("train_label_%d_%d.npy"%(id_,target_year))
+train_data_target = np.load("./DATA/train_data_%d_%d.npy"%(id_,target_year)) 
+train_label_target = np.load("./DATA/train_label_%d_%d.npy"%(id_,target_year))
 
 train_data = np.concatenate([train_data_source, train_data_target],axis=0)
 train_label = np.concatenate([train_label_source, train_label_target],axis=0)
 
-valid_data = np.load("valid_data_%d_%d.npy"%(id_,target_year)) 
-valid_label = np.load("valid_label_%d_%d.npy"%(id_,target_year))
+valid_data = np.load("./DATA/valid_data_%d_%d.npy"%(id_,target_year)) 
+valid_label = np.load("./DATA/valid_label_%d_%d.npy"%(id_,target_year))
 
-test_data = np.load("test_data_%d_%d.npy"%(id_,target_year)) 
-test_label = np.load("test_label_%d_%d.npy"%(id_,target_year))
+test_data = np.load("./DATA/test_data_%d_%d.npy"%(id_,target_year)) 
+test_label = np.load("./DATA/test_label_%d_%d.npy"%(id_,target_year))
 
 
 nrow, nt, nb = train_data.shape
