@@ -18,7 +18,6 @@ class GradReverse(Function):
 def grad_reverse(x,alpha):
     return GradReverse.apply(x,alpha)
 
-
 class Conv1D_BatchNorm_Relu_Dropout(torch.nn.Module):
     def __init__(self, hidden_dims, kernel_size=5, drop_probability=0.5):
         super(Conv1D_BatchNorm_Relu_Dropout, self).__init__()
@@ -71,7 +70,8 @@ class TempCNN(torch.nn.Module):
         conv3 = self.conv_bn_relu3(conv2)
         emb = self.flatten(conv3)
         return self.classifiers_t(emb), emb #self.discr(grad_reverse(emb,1.)), emb
-        
+
+
 class TempCNNWP(torch.nn.Module):
     def __init__(self, size, proj_dim=64, num_classes=8, kernel_size=5, hidden_dims=64, dropout=0.3):
         super(TempCNNWP, self).__init__()
@@ -191,6 +191,45 @@ class TempCNNWP3(torch.nn.Module):
         return self.classifiers_t(emb), self.head2(grad_reverse(emb,1.)), reco, head_proj
 
 
+
+class TempCNN_CDAN(torch.nn.Module): #TODO
+    def __init__(self, size, num_classes=8, kernel_size=5, hidden_dims=64, dropout=0.3):
+        super(TempCNN_CDAN, self).__init__()
+        #self.modelname = f"TempCNN_input-dim={input_dim}_num-classes={num_classes}_sequencelenght={sequencelength}_" \
+        #                 f"kernelsize={kernel_size}_hidden-dims={hidden_dims}_dropout={dropout}"
+        self.nchannels = size[0]
+        self.nts = size[1]
+
+        self.hidden_dims = hidden_dims
+
+        self.conv_bn_relu1 = Conv1D_BatchNorm_Relu_Dropout(hidden_dims, kernel_size=kernel_size,
+                                                           drop_probability=dropout)
+        self.conv_bn_relu2 = Conv1D_BatchNorm_Relu_Dropout(hidden_dims, kernel_size=kernel_size,
+                                                           drop_probability=dropout)
+        self.conv_bn_relu3 = Conv1D_BatchNorm_Relu_Dropout(hidden_dims, kernel_size=kernel_size,
+                                                           drop_probability=dropout)
+        self.flatten = nn.Flatten()
+        self.classifiers_t = FC_Classifier(256, num_classes)
+        self.discr = FC_Classifier(256, 2)
+
+    def forward(self, x):
+        # require NxTxD
+        conv1 = self.conv_bn_relu1(x)
+        conv2 = self.conv_bn_relu2(conv1)
+        conv3 = self.conv_bn_relu3(conv2)
+        emb = self.flatten(conv3)        
+
+        clf_output = self.classifiers_t(emb)
+        softmax_output = torch.softmax(clf_output, dim=1)
+
+        op_out = torch.bmm(softmax_output.unsqueeze(2), emb.unsqueeze(1)) # outer-product
+        discr_in = op_out.view(-1, softmax_output.size(1) * emb.size(1))
+        # random_out = random_layer.forward([feature, softmax_output]) #random projection (not implemented)
+        # discr_in = random_out.view(-1, random_out.size(1))
+
+        discr_out = self.discr(grad_reverse(discr_in,1.))
+
+        return clf_output, discr_out, 0, emb
 
 
 
