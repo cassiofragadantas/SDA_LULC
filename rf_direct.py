@@ -21,7 +21,9 @@ print(f'(Random seed set to {rng_seed})')
 np.random.seed(rng_seed)
 
 train_data = np.load("./DATA/data_%d.npy"%source_year)
-train_label = np.load("./DATA/gt_data_%d.npy"%source_year)[:,2]
+train_label = np.load("./DATA/gt_data_%d.npy"%source_year)
+if train_label.ndim > 1 and train_label.shape[1] > 2:
+    train_label = train_label[:,2]
 
 valid_data = np.load("./DATA/valid_data_%d_%d.npy"%(id_,target_year)) 
 valid_label = np.load("./DATA/valid_label_%d_%d.npy"%(id_,target_year))

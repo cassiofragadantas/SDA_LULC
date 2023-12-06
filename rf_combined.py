@@ -26,7 +26,9 @@ if os.path.exists(fileName+".npy"):
 
 
 train_data_source = np.load("./DATA/data_%d.npy"%source_year)
-train_label_source = np.load("./DATA/gt_data_%d.npy"%source_year)[:,2]
+train_label_source = np.load("./DATA/gt_data_%d.npy"%source_year)
+if train_label_source.ndim > 1 and train_label_source.shape[1] > 2:
+    train_label_source = train_label_source[:,2]
 
 train_data_target = np.load("./DATA/train_data_%d_%d.npy"%(id_,target_year)) 
 train_label_target = np.load("./DATA/train_label_%d_%d.npy"%(id_,target_year))

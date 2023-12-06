@@ -416,7 +416,9 @@ Y_train_target = np.load("./DATA/train_label_%d_%d.npy"%(id_, target_year))
 
 
 X_train_source = np.load("./DATA/data_%d.npy"%(source_year))
-Y_train_source = np.load("./DATA/gt_data_%d.npy"%source_year)[:,2]
+Y_train_source = np.load("./DATA/gt_data_%d.npy"%source_year)
+if Y_train_source.ndim > 1 and Y_train_source.shape[1] > 2:
+    Y_train_source = Y_train_source[:,2]
 
 X_test_target = np.load("./DATA/test_data_%d_%d.npy"%(id_, target_year))
 Y_test_target = np.load("./DATA/test_label_%d_%d.npy"%(id_, target_year))
