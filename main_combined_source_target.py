@@ -115,12 +115,12 @@ for epoch in range(epochs):
     
     end = time.time()
     pred_valid, labels_valid = evaluation(model, valid_dataloader, device)
-    f1_val = f1_score(pred_valid, labels_valid, average="weighted")
+    f1_val = f1_score(labels_valid, pred_valid, average="weighted")
     if f1_val > valid_f1:
         torch.save(model.state_dict(), "model_combined_source_target_%d_%d_%d.pth"%(source_year, id_, target_year))
         valid_f1 = f1_val
         pred_test, labels_test = evaluation(model, test_dataloader, device)
-        f1 = f1_score(pred_test, labels_test,average="weighted")
+        f1 = f1_score(labels_test, pred_test, average="weighted")
         print("TRAIN LOSS at Epoch %d: %.4f with acc on TEST TARGET SET %.2f with training time %d"%(epoch, tot_loss/den, 100*f1,(end-start)))
     else:
         print("TRAIN LOSS at Epoch %d: %.4f"%(epoch, tot_loss/den))

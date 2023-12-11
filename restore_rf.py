@@ -50,9 +50,9 @@ for i in range(5):
         continue
     
     pred = np.load(file_name)
-    tot_avg_f1.append( f1_score(pred, test_label, average="weighted") )
-    tot_micro_f1.append( f1_score(pred, test_label, average="micro") )
-    tot_perclass_f1.append( f1_score(pred, test_label, average=None) )
+    tot_avg_f1.append( f1_score(test_label, pred, average="weighted") )
+    tot_micro_f1.append( f1_score(test_label, pred, average="micro") )
+    tot_perclass_f1.append( f1_score(test_label, pred, average=None) )
 
 print("average F1 %.2f $\pm$ %.2f"%(np.mean(tot_avg_f1)*100, np.std(tot_avg_f1)*100 ))
 print("micro F1 %.2f $\pm$ %.2f"%(np.mean(tot_micro_f1)*100, np.std(tot_micro_f1)*100 ))

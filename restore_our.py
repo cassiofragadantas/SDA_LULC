@@ -61,9 +61,9 @@ for i in range(5):
 
 
     pred, labels = evaluation(model, test_dataloader, device)
-    tot_avg_f1.append( f1_score(pred, labels, average="weighted") )
-    tot_micro_f1.append( f1_score(pred, labels, average="micro") )
-    tot_perclass_f1.append( f1_score(pred, labels, average=None) )
+    tot_avg_f1.append( f1_score(labels, pred, average="weighted") )
+    tot_micro_f1.append( f1_score(labels, pred, average="micro") )
+    tot_perclass_f1.append( f1_score(labels, pred, average=None) )
 
 print("average F1 %.2f $\pm$ %.2f"%(np.mean(tot_avg_f1)*100, np.std(tot_avg_f1)*100 ))
 print("micro F1 %.2f $\pm$ %.2f"%(np.mean(tot_micro_f1)*100, np.std(tot_micro_f1)*100 ))

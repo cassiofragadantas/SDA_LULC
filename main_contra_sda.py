@@ -176,13 +176,13 @@ def train_step(model, opt, train_dataloader, test_dataloader, epoch, n_classes, 
 
     end = time.time()
     pred_valid, labels_valid = evaluation(model, valid_dataloader, device)
-    f1_val = f1_score(pred_valid, labels_valid, average="weighted")
+    f1_val = f1_score(labels_valid, pred_valid, average="weighted")
     f1_2return = valid_f1
     if f1_val > f1_2return:
         torch.save(model.state_dict(), model_file_name)
         f1_2return = f1_val
         pred_test, labels_test = evaluation(model, test_dataloader, device)
-        f1 = f1_score(pred_test, labels_test,average="weighted")
+        f1 = f1_score(labels_test, pred_test, average="weighted")
         print("Epoch %d | TOT LOSS %.3f | TARGET LOSS %.3f | SOURCE LOSS %.3f | CONTRA LOSS %.3f |DA LOSS %.3f | F1 TARGET %.3f with training time %d"%(epoch, np.mean(train_loss), np.mean(train_loss_target), np.mean(train_loss_source), np.mean(train_contra_loss), np.mean(train_loss_da),f1*100, (end-start) ) )
     else:
         print("TRAIN LOSS at Epoch %d: %.3f | TARGET LOSS %.3f | SOURCE LOSS %.3f | CONTRA LOSS %.3f |DA LOSS %.3f with training time %d"%(epoch, np.mean(train_loss), np.mean(train_loss_target), np.mean(train_loss_source), np.mean(train_contra_loss), np.mean(train_loss_da), (end-start)))
