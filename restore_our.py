@@ -31,6 +31,9 @@ source_year = int(sys.argv[1])
 target_year = int(sys.argv[2])
 # version = sys.argv[3]
 
+model_path = './results/'
+data_path = './DATA/'
+
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 
@@ -39,11 +42,10 @@ tot_micro_f1 = []
 tot_perclass_f1 = []
 for i in range(5):
     print("load %d"%i)
-    file_name = "model_sda_%s_%d_%s.pth"%(source_year, i, target_year)
+    file_name = "%smodel_sda_%s_%d_%s.pth"%(model_path, source_year, i, target_year)
 
-    path_name = './DATA/'
-    test_data = np.load("%stest_data_%d_%d.npy"%(path_name,i,target_year))
-    test_label = np.load("%stest_label_%d_%d.npy"%(path_name,i,target_year))-1
+    test_data = np.load("%stest_data_%d_%d.npy"%(data_path,i,target_year))
+    test_label = np.load("%stest_label_%d_%d.npy"%(data_path,i,target_year))-1
     if not os.path.exists(file_name):
         continue
 

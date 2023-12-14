@@ -25,6 +25,9 @@ source_year = int(sys.argv[1])
 target_year = int(sys.argv[2])
 model_type = int(sys.argv[3])
 
+model_path = './DATA/'
+data_path = './DATA/'
+
 tot_avg_f1 = []
 tot_micro_f1 = []
 tot_perclass_f1 = []
@@ -32,19 +35,18 @@ for i in range(5):
     pred = None
     #DIRECT TRANSFER
     if model_type == 0:
-        file_name = "rf_model_direct_prediction_%s_%s_%s.npy"%(source_year,target_year,i)
+        file_name = "%srf_model_direct_prediction_%s_%s_%s.npy"%(model_path, source_year,target_year,i)
     #FULL TARGET
     if model_type == 1:
-        file_name = "rf_model_full_target_prediction_%s_%s.npy"%(target_year,i)
+        file_name = "%srf_model_full_target_prediction_%s_%s.npy"%(model_path, target_year,i)
     #COMBINED SOURCE+TARGET
     if model_type == 2:
-        file_name = "rf_model_combined_prediction_%s_%s_%s.npy"%(source_year, target_year, i)
+        file_name = "%srf_model_combined_prediction_%s_%s_%s.npy"%(model_path, source_year, target_year, i)
     
-    path_name = './DATA/'
-    test_data = np.load("%stest_data_%d_%d.npy"%(path_name,i,target_year))
+    test_data = np.load("%stest_data_%d_%d.npy"%(data_path,i,target_year))
     nrow, nts, nc = test_data.shape
     test_data = np.reshape(test_data, (nrow, nts * nc))
-    test_label = np.load("%stest_label_%d_%d.npy"%(path_name,i,target_year))
+    test_label = np.load("%stest_label_%d_%d.npy"%(data_path,i,target_year))
     print(file_name)
     if not os.path.exists(file_name):
         continue

@@ -30,6 +30,9 @@ source_year = int(sys.argv[1])
 target_year = int(sys.argv[2])
 model_type = int(sys.argv[3])
 
+model_path = './results/'
+data_path = './DATA/'
+
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 
@@ -39,14 +42,13 @@ tot_perclass_f1 = []
 for i in range(5):
     file_name = None
     if model_type == 0:
-        file_name = "model_direct_transfer_%s_%d_%s.pth"%(source_year, i, target_year)
+        file_name = "%smodel_direct_transfer_%s_%d_%s.pth"%(model_path, source_year, i, target_year)
     if model_type == 1:
-        file_name = "model_full_target_%d_%s.pth"%(i, target_year)
+        file_name = "%smodel_full_target_%d_%s.pth"%(model_path, i, target_year)
     if model_type == 2:
-        file_name = "model_combined_source_target_%s_%d_%s.pth"%(source_year, i, target_year)
-    path_name = './DATA/'
-    test_data = np.load("%stest_data_%d_%d.npy"%(path_name,i,target_year))
-    test_label = np.load("%stest_label_%d_%d.npy"%(path_name,i,target_year))-1
+        file_name = "%smodel_combined_source_target_%s_%d_%s.pth"%(model_path, source_year, i, target_year)
+    test_data = np.load("%stest_data_%d_%d.npy"%(data_path,i,target_year))
+    test_label = np.load("%stest_label_%d_%d.npy"%(data_path,i,target_year))-1
 
     if not os.path.exists(file_name):
         continue
