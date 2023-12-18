@@ -62,6 +62,7 @@ np.random.seed(rng_seed)
 path_source = './DATA/' #f'./DATA_CVL_{source_year}/'
 path_target = './DATA/' #f'./DATA_CVL_{target_year}/'
 
+
 training_batch_size = 128
 
 train_target_data = np.load("%strain_data_%d_%d.npy"%(path_target, id_, target_year))
@@ -156,8 +157,7 @@ for epoch in range(epochs):
     pred_valid, labels_valid = evaluation(model, valid_dataloader, device)
     f1_val = f1_score(labels_valid, pred_valid, average="weighted")
     if f1_val > valid_f1:
-        #torch.save(model.state_dict(), "model_combined_source_target_wreco_%d_%d_%d.pth"%(source_year, id_, target_year))
-        torch.save(model.state_dict(), "model_combined_source_target_dis_%d_%d_%d.pth"%(source_year, id_, target_year))
+        torch.save(model.state_dict(), "model_sda_dis_%d_%d_%d.pth"%(source_year, id_, target_year))
         valid_f1 = f1_val
         pred_test, labels_test = evaluation(model, test_dataloader, device)
         f1 = f1_score(labels_test, pred_test, average="weighted")
