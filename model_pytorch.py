@@ -48,6 +48,56 @@ class FC_Classifier(torch.nn.Module):
     def forward(self, X):
         return self.block(X)
 
+class Reco(torch.nn.Module):
+    def __init__(self, ts_length, n_bands, drop_probability=0.5):
+        super(Reco, self).__init__()
+
+        self.final_dim = ts_length * n_bands
+        self.ts_length = ts_length
+        self.n_bands = n_bands
+
+        self.reco1 = nn.LazyLinear(self.final_dim // 2 )
+        self.bn1 = nn.BatchNorm1d(self.final_dim // 2)
+        self.dp = nn.Dropout(p=drop_probability)
+        self.reco2 = nn.LazyLinear(self.final_dim)
+
+    def forward(self, x):
+        reco = self.reco1(x)
+        reco = self.bn1(reco)
+        reco = self.dp(reco)
+        reco = self.reco2(reco)
+        #reco = self.reco2(x)
+        reco = reco.view(-1,self.n_bands,self.ts_length)
+        return reco
+
+class TempCNNDisentangle(torch.nn.Module):
+    def __init__(self, ts_length, n_bands, num_classes=8, kernel_size=5, hidden_dims=64, dropout=0.5):
+        super(TempCNNDisentangle, self).__init__()
+
+        self.enc = nn.Sequential(
+            Conv1D_BatchNorm_Relu_Dropout(hidden_dims, kernel_size=kernel_size,
+                                                           drop_probability=dropout),
+            Conv1D_BatchNorm_Relu_Dropout(hidden_dims, kernel_size=kernel_size,
+                                                           drop_probability=dropout),
+            Conv1D_BatchNorm_Relu_Dropout(hidden_dims, kernel_size=kernel_size,
+                                                           drop_probability=dropout)
+        )
+
+        self.flatten = nn.Flatten()
+        self.classifiers_t = FC_Classifier(256, num_classes)
+        self.classifiers_d_inv = FC_Classifier(256, 2)
+        self.reco = Reco(ts_length, n_bands)
+
+        self.classifiers_d_spec = FC_Classifier(256, 2)
+
+    def forward(self, x):
+        # require NxTxD
+        conv3 = self.enc(x)
+        emb = self.flatten(conv3)
+        inv_emb = emb[:,emb.shape[1]//2:]
+        spec_emb = emb[:,:emb.shape[1]//2]
+        return self.classifiers_t(inv_emb), inv_emb, spec_emb, self.reco(emb), self.classifiers_d_inv(grad_reverse(inv_emb,1.)), self.classifiers_d_spec(spec_emb)
+
 
 class TempCNN(torch.nn.Module):
     def __init__(self, num_classes=8, kernel_size=5, hidden_dims=64, dropout=0.3):

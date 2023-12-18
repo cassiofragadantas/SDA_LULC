@@ -36,15 +36,16 @@ print(f'(Random seed set to {rng_seed})')
 torch.manual_seed(rng_seed)
 np.random.seed(rng_seed)
 
+path_target = f'./DATA/' #./DATA_CVL_{target_year}/
 
-train_data = np.load("./DATA/train_data_%d_%d.npy"%(id_, target_year))
-train_label = np.load("./DATA/train_label_%d_%d.npy"%(id_, target_year))
+train_data = np.load("%strain_data_%d_%d.npy"%(path_target, id_, target_year))
+train_label = np.load("%strain_label_%d_%d.npy"%(path_target, id_, target_year))
 
-valid_data = np.load("./DATA/valid_data_%d_%d.npy"%(id_,target_year)) 
-valid_label = np.load("./DATA/valid_label_%d_%d.npy"%(id_,target_year))
+valid_data = np.load("%svalid_data_%d_%d.npy"%(path_target, id_,target_year)) 
+valid_label = np.load("%svalid_label_%d_%d.npy"%(path_target, id_,target_year))
 
-test_data = np.load("./DATA/test_data_%d_%d.npy"%(id_, target_year))
-test_label = np.load("./DATA/test_label_%d_%d.npy"%(id_, target_year))
+test_data = np.load("%stest_data_%d_%d.npy"%(path_target, id_, target_year))
+test_label = np.load("%stest_label_%d_%d.npy"%(path_target, id_, target_year))
 
 print(train_data.shape)
 print(train_label.shape)
