@@ -272,14 +272,22 @@ def classWeights(y_train):
 source_year = int( sys.argv[1] )
 id_ = int( sys.argv[2] )
 target_year = int( sys.argv[3] )
-rng_seed = int(sys.argv[4]) if len(sys.argv) > 4 else 42
+cvl = True if len(sys.argv) > 4 else False
+rng_seed = int(sys.argv[5]) if len(sys.argv) > 5 else 42
 
 print(f'(Random seed set to {rng_seed})')
 torch.manual_seed(rng_seed)
 np.random.seed(rng_seed)
 
-path_source = f'./DATA/' #./DATA_CVL_{source_year}/
-path_target = f'./DATA/'
+if cvl:
+    path_source = f'./DATA_CVL_{source_year}/'
+    path_target = f'./DATA_CVL_{target_year}/'
+    suffix = '_cvl'
+else:
+    path_source = './DATA/' #f'./DATA_CVL_{source_year}/'
+    path_target = './DATA/' #f'./DATA_CVL_{target_year}/'    
+    suffix = ''
+model_name = "model_sda%s_%d_%d_%d.pth"%(suffix, source_year, id_, target_year)
 
 X_train_target = np.load("%strain_data_%d_%d.npy"%(path_target, id_, target_year))
 Y_train_target = np.load("%strain_label_%d_%d.npy"%(path_target, id_, target_year))
@@ -340,11 +348,10 @@ criterion = nn.CrossEntropyLoss()
 
 opt = torch.optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=1e-5)
 
-model_file_name = "model_sda_%d_%d_%d.pth"%(source_year, id_, target_year)
 valid_f1 = 0.0
 for epoch in range(num_epochs):
     X_train_source, Y_train_source = shuffle(X_train_source, Y_train_source)
     X_train_target, Y_train_target = shuffle(X_train_target, Y_train_target)
     X_train_source_new, Y_train_source_new, X_train_target_new, Y_train_target_new = buildPairedSourceTargetData( X_train_source, Y_train_source, X_train_target, Y_train_target )
     train_dataloader = createDataLoaderDouble(X_train_source_new, X_train_target_new, Y_train_source_new, Y_train_target_new, batch_size = batch_size)
-    valid_f1 = train_step(model, opt, train_dataloader, test_dataloader, epoch, n_classes, batch_size, criterion, device, num_epochs, valid_dataloader, model_file_name, valid_f1)
+    valid_f1 = train_step(model, opt, train_dataloader, test_dataloader, epoch, n_classes, batch_size, criterion, device, num_epochs, valid_dataloader, model_name, valid_f1)

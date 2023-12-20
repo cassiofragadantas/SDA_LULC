@@ -53,15 +53,22 @@ def evaluation(model, dataloader, device):
 source_year = int(sys.argv[1])
 id_ = int(sys.argv[2])
 target_year = int(sys.argv[3])
-rng_seed = int(sys.argv[4]) if len(sys.argv) > 4 else 42
+cvl = True if len(sys.argv) > 4 else False
+rng_seed = int(sys.argv[5]) if len(sys.argv) > 5 else 42
 
 print(f'(Random seed set to {rng_seed})')
 torch.manual_seed(rng_seed)
 np.random.seed(rng_seed)
 
-path_source = './DATA/' #f'./DATA_CVL_{source_year}/'
-path_target = './DATA/' #f'./DATA_CVL_{target_year}/'
-
+if cvl:
+    path_source = f'./DATA_CVL_{source_year}/'
+    path_target = f'./DATA_CVL_{target_year}/'
+    suffix = '_cvl'
+else:
+    path_source = './DATA/' #f'./DATA_CVL_{source_year}/'
+    path_target = './DATA/' #f'./DATA_CVL_{target_year}/'    
+    suffix = ''
+model_name = "model_sda_dis%s_%d_%d_%d.pth"%(suffix, source_year, id_, target_year)
 
 training_batch_size = 128
 
@@ -143,21 +150,22 @@ for epoch in range(epochs):
         ohe_dom = F.one_hot(dom_batch,num_classes=2).cpu().detach().numpy()
 
         dom_loss = loss_fn(dom_pred, dom_batch)
+        # spec_dom_loss = loss_fn(spec_dom_pred, dom_batch)
         sdl_loss = sim_dist_specific_loss(spec_emb, ohe_label, ohe_dom)
         loss = loss_fn(pred, y_batch) + loss_mae(reco, x_batch) + sdl_loss + dom_loss
 
         loss.backward() # backward pass: backpropagate the prediction loss
         optimizer.step() # gradient descent: adjust the parameters by the gradients collected in the backward pass
         tot_loss+= loss.cpu().detach().numpy()
-        domain_loss+=dom_loss
-        contra_tot_loss+=sdl_loss
+        domain_loss+=dom_loss.cpu().detach().numpy()
+        contra_tot_loss+=sdl_loss.cpu().detach().numpy()
         den+=1.
 
     end = time.time()
     pred_valid, labels_valid = evaluation(model, valid_dataloader, device)
     f1_val = f1_score(labels_valid, pred_valid, average="weighted")
     if f1_val > valid_f1:
-        torch.save(model.state_dict(), "model_sda_dis_%d_%d_%d.pth"%(source_year, id_, target_year))
+        torch.save(model.state_dict(), model_name)
         valid_f1 = f1_val
         pred_test, labels_test = evaluation(model, test_dataloader, device)
         f1 = f1_score(labels_test, pred_test, average="weighted")
