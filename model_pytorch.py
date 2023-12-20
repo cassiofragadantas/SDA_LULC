@@ -99,6 +99,28 @@ class TempCNNDisentangle(torch.nn.Module):
         return self.classifiers_t(inv_emb), inv_emb, spec_emb, self.reco(emb), self.classifiers_d_inv(grad_reverse(inv_emb,1.)), self.classifiers_d_spec(spec_emb)
 
 
+class InceptionDisentangle(torch.nn.Module):
+    def __init__(self, ts_length, n_bands, num_classes=8, kernel_size=5, hidden_dims=64, dropout=0.5):
+        super(InceptionDisentangle, self).__init__()
+
+        self.enc = Inception(num_classes) #nb_filters=16 # output embedding is of size 4*nb_filters
+
+        self.flatten = nn.Flatten()
+        self.classifiers_t = FC_Classifier(256, num_classes)
+        self.classifiers_d_inv = FC_Classifier(256, 2)
+        self.reco = Reco(ts_length, n_bands)
+
+        self.classifiers_d_spec = FC_Classifier(256, 2)
+
+    def forward(self, x):
+        _, _, conv3 = self.enc(x) # before GAP layer. Shape (N, 128, T)
+        # _, conv3, _ = self.enc(x) # after GAP layer. Shape (N, 128, 1)
+        emb = self.flatten(conv3)
+        inv_emb = emb[:,emb.shape[1]//2:]
+        spec_emb = emb[:,:emb.shape[1]//2]
+        return self.classifiers_t(inv_emb), inv_emb, spec_emb, self.reco(emb), self.classifiers_d_inv(grad_reverse(inv_emb,1.)), self.classifiers_d_spec(spec_emb)
+
+
 class TempCNN(torch.nn.Module):
     def __init__(self, num_classes=8, kernel_size=5, hidden_dims=64, dropout=0.3):
         super(TempCNN, self).__init__()
@@ -331,59 +353,6 @@ class InceptionLayer(nn.Module):
 
         return output
 
-'''
-class InceptionBranch(nn.Module):
-    # PyTorch translation of the Keras code in https://github.com/hfawaz/dl-4-tsc
-    def __init__(self, nb_filters=32, use_residual=True,
-                 use_bottleneck=True, bottleneck_size=32, depth=6, kernel_size=41):
-        super(InceptionBranch, self).__init__()
-
-        self.use_residual = use_residual
-
-        # Inception layers
-        self.inception_list = nn.ModuleList(
-            [InceptionLayer(nb_filters,use_bottleneck, bottleneck_size, kernel_size) for _ in range(depth)])
-        # Explicit input sizes (i.e. without using Lazy layers). Requires n_var passed as a constructor input
-        # self.inception_list = nn.ModuleList([InceptionLayer(n_var, nb_filters,use_bottleneck, bottleneck_size, kernel_size) for _ in range(depth)])
-        # for _ in range(1,depth):
-        #     inception = InceptionLayer(4*nb_filters,nb_filters,use_bottleneck, bottleneck_size, kernel_size)
-        #     self.inception_list.append(inception)
-
-        # Fully-connected layer
-        self.gap = nn.AdaptiveAvgPool1d(1)
-        self.out = nn.Flatten()
-
-        # Shortcut layers
-        # First residual layer has n_var channels as inputs while the remaining have 4*nb_filters
-        self.conv = nn.ModuleList([
-            nn.LazyConv1d(4*nb_filters, kernel_size=1,
-                            stride=1, padding="same", bias=False)
-            for _ in range(int(depth/3))
-        ])
-        self.bn = nn.ModuleList([nn.BatchNorm1d(4*nb_filters) for _ in range(int(depth/3))])
-        self.relu = nn.ModuleList([nn.ReLU() for _ in range(int(depth/3))])
-
-    def _shortcut_layer(self, input_tensor, out_tensor, id):
-        shortcut_y = self.conv[id](input_tensor)
-        shortcut_y = self.bn[id](shortcut_y)
-        x = torch.add(shortcut_y, out_tensor)
-        x = self.relu[id](x)
-        return x
-
-    def forward(self, x):
-        input_res = x
-
-        for d, inception in enumerate(self.inception_list):
-            x = inception(x)
-
-            # Residual layer
-            if self.use_residual and d % 3 == 2:
-                x = self._shortcut_layer(input_res,x, int(d/3))
-                input_res = x
-
-        gap_layer = self.gap(x)
-        return self.out(gap_layer)
-'''
 
 class Inception(nn.Module):
     # PyTorch translation of the Keras code in https://github.com/hfawaz/dl-4-tsc
@@ -439,4 +408,4 @@ class Inception(nn.Module):
                 input_res = x
 
         gap_layer = self.gap(x)
-        return self.fc(gap_layer), gap_layer
+        return self.fc(gap_layer), gap_layer, x
