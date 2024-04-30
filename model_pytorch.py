@@ -707,9 +707,9 @@ class TempCNNDisentangleV3(torch.nn.Module):
         classif_spec, spec_emb, _, _ = self.spec(x)
         return classif, inv_emb, spec_emb, classif_spec
 
-class TempCNNDisentangleV3(torch.nn.Module):
+class TempCNNDisentangleV4(torch.nn.Module):
     def __init__(self, num_classes=8):
-        super(TempCNNDisentangleV3, self).__init__()
+        super(TempCNNDisentangleV4, self).__init__()
 
         self.inv = TempCNNV1(num_classes=num_classes)
         self.spec = TempCNNV1(num_classes=2)        
@@ -719,6 +719,22 @@ class TempCNNDisentangleV3(torch.nn.Module):
         classif_spec, spec_emb, spec_emb_n1, spec_fc_feat = self.spec(x)
         return classif, inv_emb, spec_emb, classif_spec, inv_emb_n1, spec_emb_n1, inv_fc_feat, spec_fc_feat
 
+
+class TempCNNPoem(torch.nn.Module):
+    def __init__(self, num_classes=8):
+        super(TempCNNPoem, self).__init__()
+
+        self.inv = TempCNNV1(num_classes=num_classes)
+        self.spec = TempCNNV1(num_classes=2)
+        self.classif_enc = FC_Classifier(256, 2)        
+
+    def forward(self, x):
+        classif, inv_emb, inv_emb_n1, inv_fc_feat = self.inv(x)
+        classif_dom, spec_emb, spec_emb_n1, spec_fc_feat = self.spec(x)
+        classif_enc = torch.cat([self.classif_enc(inv_emb),self.classif_enc(spec_emb)],dim=0)
+        return classif, classif_dom, classif_enc, inv_emb, spec_emb
+        
+        #return classif, inv_emb, spec_emb, classif_spec, inv_emb_n1, spec_emb_n1, inv_fc_feat, spec_fc_feat
     
 class InceptionDisentangle(torch.nn.Module):
     def __init__(self, ts_length, n_bands, num_classes=8, kernel_size=5, hidden_dims=64, dropout=0.5):

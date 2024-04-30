@@ -30,9 +30,10 @@ def evaluation(model, dataloader, device):
 source_year = int(sys.argv[1])
 target_year = int(sys.argv[2])
 # version = sys.argv[3]
+dataset = sys.argv[3] if len(sys.argv) > 3 else 'Koumbia'
 
 model_path = './results/'
-data_path = './DATA/'
+data_path = './DATA_%s/'%dataset
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
