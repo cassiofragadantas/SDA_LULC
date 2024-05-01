@@ -6,6 +6,7 @@ import sys
 from torch.utils.data import TensorDataset, DataLoader
 import numpy as np
 import sys
+sys.path.append('..')
 from sklearn.utils import shuffle
 #from model_transformer import TransformerEncoder
 from model_pytorch import TempCNN, Inception
@@ -30,13 +31,14 @@ def evaluation(model, dataloader, device):
 
 id_ = int(sys.argv[1])
 target_year = int(sys.argv[2])
-rng_seed = int(sys.argv[3]) if len(sys.argv) > 3 else 42
+dataset = sys.argv[3] if len(sys.argv) > 3 else 'Koumbia'
+rng_seed = int(sys.argv[4]) if len(sys.argv) > 4 else 42
 
 print(f'(Random seed set to {rng_seed})')
 torch.manual_seed(rng_seed)
 np.random.seed(rng_seed)
 
-path_target = f'./DATA/' #./DATA_CVL_{target_year}/
+path_target = f'../DATA_{dataset}/'
 
 train_data = np.load("%strain_data_%d_%d.npy"%(path_target, id_, target_year))
 train_label = np.load("%strain_label_%d_%d.npy"%(path_target, id_, target_year))

@@ -2,13 +2,12 @@
 
 import torch
 import torch.nn as nn
-import sys
 from torch.utils.data import TensorDataset, DataLoader
 import numpy as np
 import sys
+sys.path.append('..')
 from sklearn.utils import shuffle
 #from model_transformer import TransformerEncoder
-#from model_pytorch import TempCNNReco, TempCNNDisentangleV2, SupervisedContrastiveLoss #, Inception
 from model_pytorch import TempCNNPoem
 import time
 from sklearn.metrics import f1_score, confusion_matrix
@@ -45,7 +44,8 @@ def evaluation(model, dataloader, device):
 source_year = int(sys.argv[1])
 id_ = int(sys.argv[2])
 target_year = int(sys.argv[3])
-dataset = sys.argv[4]
+dataset = sys.argv[4] if len(sys.argv) > 4 else 'Koumbia'
+rng_seed = int(sys.argv[5]) if len(sys.argv) > 5 else 42
 
 training_batch_size = 512#256#128
 #training_batch_size = 3
@@ -53,7 +53,7 @@ training_batch_size = 512#256#128
 #prefix_path = "data_CVL3/"
 #CVL3
 #koumbia
-prefix_path = "data_%s/"%dataset
+prefix_path = "../DATA_%s/"%dataset
 
 train_target_data = np.load(prefix_path+"train_data_%d_%d.npy"%(id_, target_year))
 train_target_label = np.load(prefix_path+"train_label_%d_%d.npy"%(id_, target_year))

@@ -1,6 +1,7 @@
 # based on https://github.com/benjaminmlucas/sourcerer 
 import os
 import sys
+sys.path.append('..')
 from tqdm import tqdm
 import numpy as np
 import torch
@@ -43,7 +44,7 @@ def main():
     np.random.seed(seed)
     torch.manual_seed(seed)
 
-    data_path = "./DATA_%s/"%dataset
+    data_path = "../DATA_%s/"%dataset
     results_path = './'
 
     ##### LOAD DATA (SOURCE AND TARGET) #####

@@ -6,6 +6,7 @@ import sys
 from torch.utils.data import TensorDataset, DataLoader
 import numpy as np
 import sys
+sys.path.append('..')
 from sklearn.utils import shuffle
 #from model_transformer import TransformerEncoder
 from model_pytorch import TempCNN#, Inception
@@ -32,7 +33,7 @@ source_year = int(sys.argv[1])
 id_ = int(sys.argv[2])
 target_year = int(sys.argv[3])
 dataset = sys.argv[4]
-prefix_path = "data_%s/"%dataset
+prefix_path = "../DATA_%s/"%dataset
 
 train_target_data = np.load(prefix_path+"train_data_%d_%d.npy"%(id_, target_year))
 train_target_label = np.load(prefix_path+"train_label_%d_%d.npy"%(id_, target_year))
