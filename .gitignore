@@ -1,6 +1,0 @@
-# ignore __pycache__/
-__pycache__/
-# ignore DATA paths
-DATA*
-# ignore results folder
-results
