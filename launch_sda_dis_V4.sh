@@ -1,11 +1,9 @@
 #!/bin/sh
-
+DATASET=Koumbia # The other option is CVL3, with years 2018 and 2021
+YEAR1=2020
+YEAR2=2021
 for i in $(seq 0 4)
 do
-  python main_combined_source_target_dis_V4.py 2018 $i 2021 Koumbia > log_sda_dis_2018_2021_$i
-  python main_combined_source_target_dis_V4.py 2021 $i 2018 Koumbia > log_sda_dis_2021_2018_$i
-  python main_combined_source_target_dis_V4.py 2018 $i 2020 Koumbia > log_sda_dis_2018_2020_$i
-  python main_combined_source_target_dis_V4.py 2020 $i 2018 Koumbia > log_sda_dis_2020_2018_$i
-  python main_combined_source_target_dis_V4.py 2020 $i 2021 Koumbia > log_sda_dis_2020_2021_$i
-  python main_combined_source_target_dis_V4.py 2021 $i 2020 Koumbia > log_sda_dis_2021_2020_$i
+  python main_REFeD.py $YEAR1 $i $YEAR2 $DATASET > log_REFeD_$YEAR1_$YEAR2_$i
+  python main_REFeD.py $YEAR2 $i $YEAR1 $DATASET > log_REFeD_$YEAR2_$YEAR1_$i
 done
