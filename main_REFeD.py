@@ -7,21 +7,10 @@ from torch.utils.data import TensorDataset, DataLoader
 import numpy as np
 import sys
 from sklearn.utils import shuffle
-#from model_transformer import TransformerEncoder
-#from model_pytorch import TempCNNReco, TempCNNDisentangleV2, SupervisedContrastiveLoss #, Inception
-from model_pytorch import TempCNNReco, TempCNNDisentangleV4, SupervisedContrastiveLoss #, Inception
+from model_pytorch import TempCNNDisentangleV4, SupervisedContrastiveLoss 
 import time
 from sklearn.metrics import f1_score, confusion_matrix
 import torch.nn.functional as F
-#torch.set_default_dtype(torch.float16)
-
-def Entropy(input_):
-    bs = input_.size(0)
-    epsilon = 1e-5
-    entropy = -input_ * torch.log(input_ + epsilon)
-    entropy = torch.sum(entropy, dim=1)
-    return entropy
-
 
 
 def sim_dist_specifc_loss_spc(spec_emb, ohe_label, ohe_dom, scl, epoch):
@@ -48,8 +37,6 @@ def sim_dist_specifc_loss(spec_emb, class_label, domain_label):
 
     mask = label_mask * domain_mask
     neg_mask = 1 - mask
-
-    #print(spec_emb.shape)
 
     L2_pointwise_dist = torch.cdist(spec_emb, spec_emb, p=2.0)
     pos_dist = mask * L2_pointwise_dist
@@ -109,11 +96,7 @@ torch.manual_seed(rng_seed)
 np.random.seed(rng_seed)
 
 training_batch_size = 512#256#128
-#training_batch_size = 3
 
-#prefix_path = "DATA_CVL3/"
-#CVL3
-#koumbia
 prefix_path = "DATA_%s/"%dataset
 
 train_target_data = np.load(prefix_path+"train_data_%d_%d.npy"%(id_, target_year))
@@ -163,7 +146,6 @@ test_dataloader = DataLoader(test_dataset, shuffle=False, batch_size=1024)
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 seq_length = train_data.shape[2]
-#model = TempCNNDisentangleV2(train_data.shape[2], train_data.shape[1], n_classes).to(device)
 model = TempCNNDisentangleV4(n_classes).to(device)
 
 learning_rate = 0.0001
@@ -211,53 +193,20 @@ for epoch in range(epochs):
         ohe_label = F.one_hot(y_batch,num_classes=n_classes).cpu().detach().numpy()
         ohe_dom = F.one_hot(dom_batch,num_classes=2).cpu().detach().numpy()
 
-        #ssl_loss = similar_specific_loss(spec_emb, ohe_label, ohe_dom)
-        ''' NO Weigthing '''
-        #dom_loss = loss_fn(dom_pred, dom_batch)
-        ''' NO Weigthing '''
-
-        ''' Weigthing CDAN+E '''
-        '''
-        pred_softmax = nn.Softmax(dim=1)(pred).detach()
-        entropy = Entropy(pred_softmax)
-        weight = 1.0+torch.exp(-entropy)
-        dom_loss = torch.sum(weight * loss_fn_noReduction( dom_pred, dom_batch  ) ) / torch.sum(weight).detach().item()
-        '''
-        ''' Weigthing CDAN+E '''
         ##### DOMAIN CLASSIFICATION #####
         loss_ce_spec_dom = loss_fn(spec_d_pred, dom_batch)
-
-        ##### DOMAIN-CLASS CLASSIFICATION #####
-        '''
-        temp_dc_labels = []
-        for el in zip(y_batch.cpu().detach().numpy(), dom_batch.cpu().detach().numpy()):
-            k = "%d_%d"%(el)
-            temp_dc_labels.append(hashmap_cl_dom[k] )
-        temp_dc_labels = torch.tensor( np.array(temp_dc_labels), dtype=torch.int64 ).to(device)
-        loss_ce_spec_cdom = loss_fn(spec_d_pred, temp_dc_labels)
-        '''
-        #sdl_loss = sim_dist_specifc_loss(spec_emb, ohe_label, ohe_dom)
-        #sdl_loss_supContraLoss = sim_dist_specifc_loss_spc(spec_emb, y_batch.cpu().detach().numpy(), dom_batch.cpu().detach().numpy(), scl)
-        #print("sdl_loss_supContraLoss ",sdl_loss_supContraLoss)
-        #sdl_loss = sim_dist_specifc_loss_v2(spec_emb, ohe_label, ohe_dom)
-
 
         ##### MIXED MAINFOLD & CONTRASTIVE LEARNING ####
         
         cl_labels_npy = y_batch.cpu().detach().numpy()
         dummy_labels_npy = np.ones_like(cl_labels_npy) * n_classes
-        #y_mix_labels = np.concatenate([ cl_labels_npy , dummy_labels_npy , cl_labels_npy],axis=0)
         y_mix_labels = np.concatenate([ cl_labels_npy , cl_labels_npy],axis=0)
-        #y_mix_labels = np.concatenate([ cl_labels_npy , dummy_labels_npy],axis=0)
         
         
         #DOMAIN LABEL FOR DOMAIN-CLASS SPECIFIC EMBEDDING and DOMAIN SPECIFIC EMBEDDING IS 0 OR 1 
         spec_dc_dom_labels = dom_batch.cpu().detach().numpy()
         #DOMAIN LABEL FOR INV EMBEDDING IS 2
         inv_dom_labels = np.ones_like(spec_dc_dom_labels) * 2
-
-        #dom_mix_labels = np.concatenate([inv_dom_labels, spec_dc_dom_labels, spec_dc_dom_labels],axis=0)
-        #joint_embedding = torch.concat([inv_emb, spec_emb_d, spec_emb_dc])
 
         dom_mix_labels = np.concatenate([inv_dom_labels, spec_dc_dom_labels],axis=0)
         joint_embedding = torch.concat([inv_emb, spec_emb_d])
@@ -275,11 +224,6 @@ for epoch in range(epochs):
         loss_cl_spec = loss_ce_spec_dom#loss_ce_spec_cdom #+loss_ce_spec_dom
         contra_loss = mixdl_loss_supContraLoss + mixdl_loss_supContraLoss_n1 + mixdl_loss_supContraLoss_fc
         loss = loss_fn(pred, y_batch) + contra_loss + loss_cl_spec #+ loss_ce_spec_dom  #+ dom_loss
-        #print("loss ", loss)
-        #loss = loss_fn(pred, y_batch) + loss_ce_spec_dom + sdl_loss_supContraLoss #sdl_loss #
-        #loss = loss_fn(pred, y_batch) + dom_loss + loss_ce_spec_dom #+ sdl_loss #
-        #loss = loss_fn(pred, y_batch) + dom_loss + sdl_loss 
-        #loss = loss_fn(pred, y_batch)  + sdl_loss + loss_ce_spec_dom #+ dom_loss #
 
         loss.backward() # backward pass: backpropagate the prediction loss
         optimizer.step() # gradient descent: adjust the parameters by the gradients collected in the backward pass
