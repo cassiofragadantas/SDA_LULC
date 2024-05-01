@@ -1,5 +1,3 @@
-### To implemente the Transformer Framework I used the code from this website : https://www.kaggle.com/code/arunmohan003/transformer-from-scratch-using-pytorch
-
 import torch
 import torch.nn as nn
 import sys
@@ -8,8 +6,7 @@ import numpy as np
 import sys
 sys.path.append('..')
 from sklearn.utils import shuffle
-#from model_transformer import TransformerEncoder
-from model_pytorch import TempCNN#, Inception
+from model_pytorch import TempCNN
 import time
 from sklearn.metrics import f1_score
 
@@ -91,7 +88,6 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 seq_length = train_source_data.shape[2]
 embedding_size = 64
-#model = Inception(n_classes).to(device)
 model = TempCNN(n_classes).to(device)
 
 

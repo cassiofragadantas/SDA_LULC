@@ -1,11 +1,6 @@
-#import torch
-#import torch.nn as nn
-#from torch.utils.data import TensorDataset, DataLoader
 import numpy as np
 import sys
 from sklearn.utils import shuffle
-#from model_transformer import TransformerEncoder
-#from model_pytorch import TempCNN, Inception
 import time
 from sklearn.metrics import f1_score
 from sklearn.ensemble import RandomForestClassifier
