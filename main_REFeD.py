@@ -292,7 +292,7 @@ for epoch in range(epochs):
     pred_valid, labels_valid = evaluation(model, valid_dataloader, device)
     f1_val = f1_score(labels_valid, pred_valid, average="weighted")
     if f1_val > valid_f1:
-        torch.save(model.state_dict(), "model_combined_source_target_dis_V4_%s_%d_%d_%d.pth"%(dataset, source_year, id_, target_year))
+        torch.save(model.state_dict(), "model_REFeD_%s_%d_%d_%d.pth"%(dataset, source_year, id_, target_year))
         valid_f1 = f1_val
         pred_test, labels_test = evaluation(model, test_dataloader, device)
         f1 = f1_score(labels_test, pred_test, average="weighted")
