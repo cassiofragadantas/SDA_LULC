@@ -273,8 +273,8 @@ for epoch in range(epochs):
         ####################################
 
         loss_cl_spec = loss_ce_spec_dom#loss_ce_spec_cdom #+loss_ce_spec_dom
-        loss = loss_fn(pred, y_batch) + mixdl_loss_supContraLoss + mixdl_loss_supContraLoss_n1 + mixdl_loss_supContraLoss_fc + loss_cl_spec#+ loss_ce_spec_dom  #+ dom_loss
-        # loss = loss_fn(pred, y_batch) + mixdl_loss_supContraLoss + mixdl_loss_supContraLoss_fc + loss_cl_spec #+ loss_ce_spec_dom  #+ dom_loss
+        contra_loss = mixdl_loss_supContraLoss + mixdl_loss_supContraLoss_n1 + mixdl_loss_supContraLoss_fc
+        loss = loss_fn(pred, y_batch) + contra_loss + loss_cl_spec #+ loss_ce_spec_dom  #+ dom_loss
         #print("loss ", loss)
         #loss = loss_fn(pred, y_batch) + loss_ce_spec_dom + sdl_loss_supContraLoss #sdl_loss #
         #loss = loss_fn(pred, y_batch) + dom_loss + loss_ce_spec_dom #+ sdl_loss #
@@ -284,10 +284,10 @@ for epoch in range(epochs):
         loss.backward() # backward pass: backpropagate the prediction loss
         optimizer.step() # gradient descent: adjust the parameters by the gradients collected in the backward pass
         tot_loss+= loss.cpu().detach().numpy()
-        contra_tot_loss+=mixdl_loss_supContraLoss.cpu().detach().numpy()
+        contra_tot_loss+= contra_loss.cpu().detach().numpy()
         den+=1.
     
-     
+    
     end = time.time()
     pred_valid, labels_valid = evaluation(model, valid_dataloader, device)
     f1_val = f1_score(labels_valid, pred_valid, average="weighted")
@@ -297,7 +297,7 @@ for epoch in range(epochs):
         pred_test, labels_test = evaluation(model, test_dataloader, device)
         f1 = f1_score(labels_test, pred_test, average="weighted")
         print("TOT AND CONTRA LOSS at Epoch %d: %.4f %.4f with acc on TEST TARGET SET %.2f with training time %d"%(epoch, tot_loss/den, contra_tot_loss/den, 100*f1, (end-start)))
-        print(confusion_matrix(labels_test, pred_test))
+        #print(confusion_matrix(labels_test, pred_test))
     else:
         print("TOT AND CONTRA AND TRAIN LOSS at Epoch %d: %.4f %.4f"%(epoch, tot_loss/den, contra_tot_loss/den))
     sys.stdout.flush()

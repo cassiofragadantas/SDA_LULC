@@ -3,7 +3,7 @@ import numpy as np
 import sys
 #from model_transformer import TransformerEncoder
 import time
-from sklearn.metrics import f1_score
+from sklearn.metrics import f1_score, accuracy_score
 import os
 
 def evaluation(model, dataloader, device):
@@ -24,12 +24,14 @@ def evaluation(model, dataloader, device):
 source_year = int(sys.argv[1])
 target_year = int(sys.argv[2])
 model_type = int(sys.argv[3])
+dataset = sys.argv[4]
 
 model_path = './DATA/'
-data_path = './DATA/'
+data_path = f'./DATA_{dataset}/'
 
 tot_avg_f1 = []
 tot_micro_f1 = []
+tot_acc = []
 tot_perclass_f1 = []
 for i in range(5):
     pred = None
@@ -54,10 +56,12 @@ for i in range(5):
     pred = np.load(file_name)
     tot_avg_f1.append( f1_score(test_label, pred, average="weighted") )
     tot_micro_f1.append( f1_score(test_label, pred, average="micro") )
+    tot_acc.append( accuracy_score(test_label, pred) )
     tot_perclass_f1.append( f1_score(test_label, pred, average=None) )
 
 print("average F1 %.2f $\pm$ %.2f"%(np.mean(tot_avg_f1)*100, np.std(tot_avg_f1)*100 ))
 print("micro F1 %.2f $\pm$ %.2f"%(np.mean(tot_micro_f1)*100, np.std(tot_micro_f1)*100 ))
+print("acc %.2f $\pm$ %.2f"%(np.mean(tot_acc)*100, np.std(tot_acc)*100 ))
 print("per-class F1 %s $\pm$ %s"
       %(np.array2string(np.mean(np.stack(tot_perclass_f1),axis=0)*100, precision=2), 
         np.array2string(np.std(np.stack(tot_perclass_f1),axis=0)*100, precision=2 )))
