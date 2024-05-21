@@ -6,7 +6,6 @@ import sys
 from torch.utils.data import TensorDataset, DataLoader
 import numpy as np
 import sys
-from sklearn.utils import shuffle
 from model_pytorch import TempCNNDisentangleV4, SupervisedContrastiveLoss 
 import time
 from sklearn.metrics import f1_score, confusion_matrix
@@ -26,50 +25,6 @@ def sim_dist_specifc_loss_spc(spec_emb, ohe_label, ohe_dom, scl, epoch):
     return scl(norm_spec_emb, new_combined_label, epoch=epoch)
 
 
-
-def sim_dist_specifc_loss(spec_emb, class_label, domain_label):
-    margin = 1.0
-    label_mask = np.matmul(class_label, np.transpose(class_label))
-    label_mask = torch.tensor(label_mask).to(device)
-
-    domain_mask = np.matmul(domain_label, np.transpose(domain_label))
-    domain_mask = torch.tensor(domain_mask).to(device)
-
-    mask = label_mask * domain_mask
-    neg_mask = 1 - mask
-
-    L2_pointwise_dist = torch.cdist(spec_emb, spec_emb, p=2.0)
-    pos_dist = mask * L2_pointwise_dist
-    neg_dist = neg_mask * L2_pointwise_dist
-
-    ud_pos_dist = torch.triu(pos_dist, diagonal=1)
-    ud_neg_dist = torch.triu(neg_dist, diagonal=1)
-    ud_pos_mask = torch.triu(mask, diagonal=1)
-    ud_neg_mask = torch.triu(neg_mask, diagonal=1)
-
-    pos_elem = torch.div( torch.sum(ud_pos_dist), torch.sum(ud_pos_mask) )
-    neg_elem = torch.div( torch.sum(F.relu( margin - ud_neg_dist )), torch.sum(ud_neg_mask)  )
-    return (pos_elem + neg_elem)/2
-    
-def similar_specific_loss(spec_emb, class_label, domain_label):
-    label_mask = np.matmul(class_label, np.transpose(class_label))
-    label_mask = torch.tensor(label_mask).to(device)
-
-    domain_mask = np.matmul(domain_label, np.transpose(domain_label))
-    domain_mask = torch.tensor(domain_mask).to(device)
-
-    mask = label_mask * domain_mask
-    #mask = domain_mask
-
-
-    L2_pointwise_dist = torch.cdist(spec_emb, spec_emb, p=2.0)
-    L2_pointwise_dist = L2_pointwise_dist * mask
-    upper_diag_L2_dist = torch.triu(L2_pointwise_dist, diagonal=1)
-    upper_diag_mask = torch.triu(mask, diagonal=1)
-
-    return torch.div( torch.sum(upper_diag_L2_dist), torch.sum(upper_diag_mask) )
-
-
 def evaluation(model, dataloader, device):
     model.eval()
     tot_pred = []
@@ -77,7 +32,7 @@ def evaluation(model, dataloader, device):
     for x_batch, y_batch in dataloader:
         x_batch = x_batch.to(device)
         y_batch = y_batch.to(device)
-        pred, _, _,_,_,_,_,_ = model(x_batch)
+        pred = model(x_batch)[0]
         pred_npy = np.argmax(pred.cpu().detach().numpy(), axis=1)
         tot_pred.append( pred_npy )
         tot_labels.append( y_batch.cpu().detach().numpy())
@@ -145,28 +100,15 @@ valid_dataloader = DataLoader(valid_dataset, shuffle=False, batch_size=1024)
 test_dataloader = DataLoader(test_dataset, shuffle=False, batch_size=1024)
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
-seq_length = train_data.shape[2]
 model = TempCNNDisentangleV4(n_classes).to(device)
 
 learning_rate = 0.0001
 loss_fn = nn.CrossEntropyLoss()
-loss_fn_noReduction = nn.CrossEntropyLoss(reduction='none')
 scl = SupervisedContrastiveLoss()
 
 optimizer = torch.optim.AdamW(params=model.parameters(), lr=learning_rate)
 
-
 epochs = 200
-# Loop through the data
-valid_f1 = 0.0
-hashmap_cl_dom = {}
-for i in range(n_classes):
-    for j in range(2):
-        k = "%d_%d"%(i,j)
-        if k not in hashmap_cl_dom:
-            hashmap_cl_dom[k] = len(hashmap_cl_dom)
-
-
 
 for epoch in range(epochs):
     start = time.time()
@@ -175,9 +117,6 @@ for epoch in range(epochs):
     domain_loss = 0.0
     contra_tot_loss = 0.0
     den = 0
-    #p = float(epoch) / epochs
-    lambda_val = 1.0#(2. / (1. + np.exp(-10 * p))) - 1
-
 
     for x_batch, y_batch, dom_batch in train_dataloader:
         if x_batch.shape[0] != training_batch_size:
@@ -187,7 +126,6 @@ for epoch in range(epochs):
         y_batch = y_batch.to(device)
         dom_batch = dom_batch.to(device)
         optimizer.zero_grad()
-        #pred, inv_emb, spec_emb_dc, spec_dc_pred = model(x_batch, alpha=lambda_val)
         pred, inv_emb, spec_emb_d, spec_d_pred, inv_emb_n1, spec_emb_n1, inv_fc_feat, spec_fc_feat = model(x_batch)
 
         ohe_label = F.one_hot(y_batch,num_classes=n_classes).cpu().detach().numpy()
@@ -199,9 +137,7 @@ for epoch in range(epochs):
         ##### MIXED MAINFOLD & CONTRASTIVE LEARNING ####
         
         cl_labels_npy = y_batch.cpu().detach().numpy()
-        dummy_labels_npy = np.ones_like(cl_labels_npy) * n_classes
         y_mix_labels = np.concatenate([ cl_labels_npy , cl_labels_npy],axis=0)
-        
         
         #DOMAIN LABEL FOR DOMAIN-CLASS SPECIFIC EMBEDDING and DOMAIN SPECIFIC EMBEDDING IS 0 OR 1 
         spec_dc_dom_labels = dom_batch.cpu().detach().numpy()
@@ -211,19 +147,18 @@ for epoch in range(epochs):
         dom_mix_labels = np.concatenate([inv_dom_labels, spec_dc_dom_labels],axis=0)
         joint_embedding = torch.concat([inv_emb, spec_emb_d])
 
-
         mixdl_loss_supContraLoss = sim_dist_specifc_loss_spc(joint_embedding, y_mix_labels, dom_mix_labels, scl, epoch)
         joint_embedding_n1 = torch.concat([inv_emb_n1, spec_emb_n1])
         mixdl_loss_supContraLoss_n1 = sim_dist_specifc_loss_spc(joint_embedding_n1, y_mix_labels, dom_mix_labels, scl, epoch)
 
         joint_embedding_fc_feat = torch.concat([inv_fc_feat, spec_fc_feat])
         mixdl_loss_supContraLoss_fc = sim_dist_specifc_loss_spc(joint_embedding_fc_feat, y_mix_labels, dom_mix_labels, scl, epoch)
-        
+
+        contra_loss = mixdl_loss_supContraLoss + mixdl_loss_supContraLoss_n1 + mixdl_loss_supContraLoss_fc
+
         ####################################
 
-        loss_cl_spec = loss_ce_spec_dom#loss_ce_spec_cdom #+loss_ce_spec_dom
-        contra_loss = mixdl_loss_supContraLoss + mixdl_loss_supContraLoss_n1 + mixdl_loss_supContraLoss_fc
-        loss = loss_fn(pred, y_batch) + contra_loss + loss_cl_spec #+ loss_ce_spec_dom  #+ dom_loss
+        loss = loss_fn(pred, y_batch) + contra_loss + loss_ce_spec_dom
 
         loss.backward() # backward pass: backpropagate the prediction loss
         optimizer.step() # gradient descent: adjust the parameters by the gradients collected in the backward pass
