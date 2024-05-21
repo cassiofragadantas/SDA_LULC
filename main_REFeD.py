@@ -109,6 +109,7 @@ scl = SupervisedContrastiveLoss()
 optimizer = torch.optim.AdamW(params=model.parameters(), lr=learning_rate)
 
 epochs = 200
+valid_f1 = 0.
 
 for epoch in range(epochs):
     start = time.time()
